@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+    <import resource="applicationContext.xml"/>
+
+    <!--IOC-->
+    <context:component-scan base-package="cn.wolfcode.wms.web.controller"/>
+    <!--SpringMVC的注解扫描器-->
+    <mvc:annotation-driven/>
+
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!--统一的异常处理-->
+    <!--<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <property name="defaultErrorView" value="commons/error"/>
+        <property name="exceptionAttribute" value="ex"/>
+        <property name="exceptionMappings">
+            <props>
+                <prop key="cn.wolfcode.wms.utils.SecurityException">   </prop>
+            </props>
+            &lt;!&ndash; 还可以定义其他的自定义异常 &ndash;&gt;
+        </property>
+    </bean>-->
+
+    <!--配置拦截器-->
+    <!--<mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/login.do"/>
+            <bean class="cn.wolfcode.wms.web.interceptor.CheckLoginInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/login.do"/>
+            <bean class="cn.wolfcode.wms.web.interceptor.SecurityInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>-->
+
+    <!--文件上传的解析器-->
+    <!--id必须为-->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="#{1024*1024}"/>
+    </bean>
+</beans>

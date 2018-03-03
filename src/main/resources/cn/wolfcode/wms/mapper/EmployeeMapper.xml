@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.wms.mapper.EmployeeMapper">
+    <resultMap id="BaseResultMap" type="cn.wolfcode.wms.domain.Employee">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="password" property="password"/>
+        <result column="email" property="email"/>
+        <result column="age" property="age"/>
+        <result column="admin" property="admin"/>
+        <association property="department" javaType="Department" columnPrefix="d_">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+            <result property="sn" column="sn"/>
+        </association>
+        <collection property="roles" ofType="Role"
+                    select="cn.wolfcode.wms.mapper.RoleMapper.selectByEmployeeId" column="id"></collection>
+    </resultMap>
+    <delete id="deleteByPrimaryKey">
+        DELETE FROM `employee`
+        WHERE id = #{id}
+    </delete>
+    <!--批量删除-->
+    <delete id="batchDelete">
+        delete from employee where id in
+        <foreach collection="array" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteEmployeeRoleRelation">
+        DELETE FROM employee_role
+        WHERE employee_id = #{empId}
+    </delete>
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO `employee` (name, password, email, age, admin, dept_id)
+        VALUES (#{name}, #{password}, #{email}, #{age}, #{admin}, #{department.id})
+    </insert>
+    <insert id="saveEmployeeRoleRelation">
+
+        INSERT INTO employee_role VALUES (#{employeeId}, #{roleId})
+    </insert>
+    <update id="updateByPrimaryKey">
+        UPDATE `employee`
+        SET name    = #{name},
+            email   = #{email},
+            age     = #{age},
+            admin   = #{admin},
+            dept_id = #{department.id}
+        WHERE id = #{id}
+    </update>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        SELECT
+            e.id,
+            e.name,
+            e.password,
+            e.email,
+            e.age,
+            e.admin,
+            d.id   d_id,
+            d.name d_name,
+            d.sn   d_sn
+        FROM `employee` e
+            LEFT JOIN department d ON e.dept_id = d.id
+        WHERE e.id = #{id}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+            id,
+            name,
+            password,
+            email,
+            age,
+            admin,
+            dept_id
+        FROM `employee`
+    </select>
+    <select id="queryForCount" resultType="java.lang.Integer">
+        SELECT
+        count(e.id)
+        FROM `employee` e
+        LEFT JOIN department d ON e.dept_id = d.id
+        <include refid="sql_conditions"/>
+    </select>
+    <select id="queryForList" resultMap="BaseResultMap">
+        SELECT
+        e.id,
+        e.name,
+        e.password,
+        e.email,
+        e.age,
+        e.admin,
+        d.id d_id,
+        d.name d_name,
+        d.sn d_sn
+        FROM `employee` e
+        LEFT JOIN department d ON e.dept_id = d.id
+        <include refid="sql_conditions"/>
+        LIMIT #{start}, #{pageSize}
+    </select>
+    <select id="login" resultType="cn.wolfcode.wms.domain.Employee">
+        SELECT
+            id,
+            name,
+            password,
+            email,
+            age,
+            admin,
+            dept_id
+        FROM `employee`
+        WHERE name = #{name} AND password = #{password}
+    </select>
+
+    <sql id="sql_conditions">
+        <where>
+            <if test="keywords!=null">
+                and (e.name like concat('%',#{keywords},'%') or e.email like concat('%',#{keywords},'%'))
+            </if>
+            <if test="deptId >0">
+                and e.dept_id=#{deptId}
+            </if>
+        </where>
+    </sql>
+</mapper>

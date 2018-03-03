@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wolfcode.wms.mapper.ChartsMapper">
+
+    <select id="selectOrderCharts" resultType="java.util.Map">
+        SELECT
+        ${groupByType} groupType,
+
+        sum(item.number) totalNumber,
+
+        sum(item.amount) totalAmount
+
+        from orderbillitem item
+
+        join orderbill ob on ob.id=item.bill_id
+
+        join employee inputUser on inputUser.id=ob.input_user_id
+
+        join product p on p.id = item.product_id
+
+        join supplier s on s.id = ob.supplier_id
+
+        <include refid="sql_orderCharts"/>
+
+        GROUP BY ${groupByType}
+    </select>
+    <select id="selectSaleCharts" resultType="java.util.Map">
+        SELECT
+            ${groupByType}                            groupType,
+            sum(sa.number)                            totalNumber,
+            sum(sa.sale_amount)                       totalAmount,
+            sum(sa.sale_amount) - sum(sa.cost_amount) profit
+        FROM saleaccount sa
+            JOIN employee saleman ON saleman.id = sa.saleman_id
+            JOIN product p ON p.id = sa.product_id
+            JOIN client c ON c.id = sa.client_id
+            <include refid="sql_saleCharts"/>
+        GROUP BY ${groupByType}
+    </select>
+
+    <sql id="sql_orderCharts">
+        <where>
+            <if test="beginDate!=null">
+                and ob.vdate &gt;= #{beginDate}
+            </if>
+            <if test="endDate!=null">
+                and ob.vdate &lt;= #{endDate}
+            </if>
+            <if test="supplierId>0">
+                and s.id=#{supplierId}
+            </if>
+            <if test="brandId>0">
+                and p.brand_id=#{brandId}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="sql_saleCharts">
+        <where>
+            <if test="beginDate!=null">
+                and sa.vdate &gt;= #{beginDate}
+            </if>
+            <if test="endDate!=null">
+                and sa.vdate &lt;= #{endDate}
+            </if>
+            <if test="clientId>0">
+                and c.id=#{clientId}
+            </if>
+            <if test="brandId>0">
+                and p.brand_id=#{brandId}
+            </if>
+        </where>
+    </sql>
+</mapper>

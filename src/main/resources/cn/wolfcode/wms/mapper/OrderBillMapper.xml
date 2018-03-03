@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.wolfcode.wms.mapper.OrderBillMapper">
+    <resultMap id="BaseResultMap" type="cn.wolfcode.wms.domain.OrderBill">
+        <id column="id" property="id"/>
+        <result column="sn" property="sn"/>
+        <result column="vdate" property="vdate"/>
+        <result column="status" property="status"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="total_number" property="totalNumber"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="input_time" property="inputTime"/>
+        <association property="inputUser" javaType="Employee" columnPrefix="inputUser_">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="auditor" javaType="Employee" columnPrefix="auditor_">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="supplier" javaType="Supplier" columnPrefix="supplier_">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+        </association>
+        <collection property="items" ofType="OrderBillItem"
+                    select="cn.wolfcode.wms.mapper.OrderBillItemMapper.selectByBillId" column="id"/>
+    </resultMap>
+    <delete id="deleteByPrimaryKey">
+        DELETE FROM `orderbill`
+        WHERE id = #{id}
+    </delete>
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO `orderbill` (sn, vdate, status, total_amount, total_number, audit_time,
+                                 input_time, input_user_id, auditor_id, supplier_id)
+        VALUES (#{sn}, #{vdate}, #{status}, #{totalAmount}, #{totalNumber}, #{auditTime},
+                #{inputTime}, #{inputUser.id}, #{auditor.id}, #{supplier.id})
+    </insert>
+    <update id="updateByPrimaryKey">
+        UPDATE `orderbill`
+        SET sn           = #{sn},
+            vdate        = #{vdate},
+            total_amount = #{totalAmount},
+            total_number = #{totalNumber},
+            supplier_id  = #{supplier.id}
+        WHERE id = #{id}
+    </update>
+
+    <update id="audit">
+        UPDATE orderbill
+        SET
+            status     = #{status},
+            auditor_id = #{auditor.id},
+            audit_time = #{auditTime}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        SELECT
+            ob.id,
+            ob.sn,
+            ob.vdate,
+            ob.status,
+            ob.total_amount,
+            ob.total_number,
+            ob.audit_time,
+            ob.input_time,
+            ob.input_user_id,
+            ob.auditor_id,
+            s.id   supplier_id,
+            s.name supplier_name
+        FROM `orderbill` ob
+            JOIN supplier s ON s.id = ob.supplier_id
+        WHERE ob.id = #{id}
+    </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+            id,
+            sn,
+            vdate,
+            status,
+            total_amount,
+            total_number,
+            audit_time,
+            input_time,
+            input_user_id,
+            auditor_id,
+            supplier_id
+        FROM `orderbill`
+    </select>
+
+    <sql id="sql_conditions">
+        <where>
+            <if test="beginDate!=null">
+                and ob.vdate &gt;= #{beginDate}
+            </if>
+            <if test="endDate!=null">
+                and ob.vdate &lt;= #{endDate}
+            </if>
+            <if test="supplierId>0">
+                and s.id=#{supplierId}
+            </if>
+            <if test="status >= 0">
+                and ob.status=#{status}
+            </if>
+        </where>
+
+    </sql>
+    <select id="queryForCount" resultType="java.lang.Integer">
+        SELECT count(ob.id)
+        FROM orderbill ob
+        JOIN supplier s ON ob.supplier_id = s.id
+        JOIN employee iu ON iu.id = ob.input_user_id
+        LEFT JOIN employee au ON au.id = ob.auditor_id
+        <include refid="sql_conditions"/>
+    </select>
+    <select id="queryForList" resultMap="BaseResultMap">
+        SELECT
+        ob.id,
+        ob.sn,
+        ob.vdate,
+        ob.total_amount,
+        ob.total_number,
+        ob.status,
+        s.id supplier_id,
+        s.name supplier_name,
+        iu.id inputUser_id,
+        iu.name inputUser_name,
+        au.id auditor_id,
+        au.name auditor_name
+        FROM orderbill ob
+        JOIN supplier s ON ob.supplier_id = s.id
+        JOIN employee iu ON iu.id = ob.input_user_id
+        LEFT JOIN employee au ON au.id = ob.auditor_id
+        <include refid="sql_conditions"/>
+        LIMIT #{start}, #{pageSize};
+    </select>
+</mapper>
